@@ -1,0 +1,36 @@
+package displayer
+
+import "github.com/fatih/color"
+
+var teamColors = map[string]*color.Color{
+	"ATL": color.New(color.BgHiYellow, color.FgHiRed, color.Bold),
+	"BOS": color.New(color.BgGreen, color.FgHiWhite, color.Bold),
+	"BKN": color.New(color.BgBlack, color.FgHiWhite, color.Bold),
+	"CHA": color.New(color.BgCyan, color.FgHiWhite, color.Bold),
+	"CHI": color.New(color.BgBlack, color.FgRed, color.Bold),
+	"CLE": color.New(color.BgMagenta, color.FgHiYellow, color.Bold),
+	"DAL": color.New(color.BgBlue, color.FgHiWhite, color.Bold),
+	"DEN": color.New(color.BgBlue, color.FgYellow, color.Bold),
+	"DET": color.New(color.BgRed, color.FgHiWhite, color.Bold),
+	"GSW": color.New(color.BgBlue, color.FgHiYellow, color.Bold),
+	"HOU": color.New(color.BgRed, color.FgBlack, color.Bold),
+	"IND": color.New(color.BgYellow, color.FgHiWhite, color.Bold),
+	"LAC": color.New(color.BgRed, color.FgHiWhite, color.Bold),
+	"LAL": color.New(color.BgYellow, color.FgMagenta, color.Bold),
+	"MEM": color.New(color.BgBlue, color.FgYellow, color.Bold),
+	"MIA": color.New(color.BgRed, color.FgYellow, color.Bold),
+	"MIL": color.New(color.BgHiWhite, color.FgGreen, color.Bold),
+	"MIN": color.New(color.BgBlue, color.FgHiBlue, color.Bold),
+	"NOP": color.New(color.BgBlue, color.FgRed, color.Bold),
+	"NYK": color.New(color.BgBlue, color.FgHiRed, color.Bold),
+	"OKC": color.New(color.BgHiRed, color.FgHiYellow, color.Bold),
+	"ORL": color.New(color.BgHiBlue, color.FgHiWhite, color.Bold),
+	"PHI": color.New(color.BgBlue, color.FgRed, color.Bold),
+	"PHX": color.New(color.BgMagenta, color.FgYellow, color.Bold),
+	"POR": color.New(color.BgHiRed, color.FgBlack, color.Bold),
+	"SAC": color.New(color.BgMagenta, color.FgHiWhite, color.Bold),
+	"SAS": color.New(color.BgBlack, color.FgHiWhite, color.Bold),
+	"TOR": color.New(color.BgRed, color.FgBlack, color.Bold),
+	"UTA": color.New(color.BgBlue, color.FgYellow, color.Bold),
+	"WAS": color.New(color.BgBlue, color.FgRed, color.Bold),
+}
