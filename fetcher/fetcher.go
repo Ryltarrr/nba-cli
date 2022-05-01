@@ -11,7 +11,7 @@ type Fetcher struct {
 	client http.Client
 }
 
-func (fetcher Fetcher) GetGamesForDate(date string) {
+func (fetcher Fetcher) GetGamesForDate(date string) []byte {
 	req, err := http.NewRequest(
 		"GET",
 		fmt.Sprintf("https://stats.nba.com/stats/scoreboardv3?GameDate=%s&LeagueID=00", date),
@@ -35,5 +35,5 @@ func (fetcher Fetcher) GetGamesForDate(date string) {
 	}
 	res.Body.Close()
 
-	fmt.Println(string(body))
+	return body
 }
