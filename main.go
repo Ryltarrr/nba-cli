@@ -2,10 +2,10 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"log"
 	"time"
 
+	"github.com/Ryltarrr/go-nba/displayer"
 	"github.com/Ryltarrr/go-nba/fetcher"
 	"github.com/Ryltarrr/go-nba/parser"
 )
@@ -16,11 +16,10 @@ func main() {
 	flag.Parse()
 	var fetcher fetcher.Fetcher
 	body := fetcher.GetGamesForDate(*date)
-	fmt.Println(string(body))
 	var parser parser.Parser
 	results, err := parser.ParseResults(body)
 	if err != nil {
 		log.Fatalln("Error while parsing results", err)
 	}
-	fmt.Println(results.Scoreboard.LeagueName)
+	displayer.DisplayGameResults(results)
 }
