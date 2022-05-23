@@ -14,3 +14,12 @@ func (p *Parser) ParseResults(body []byte) (Results, error) {
 	}
 	return results, nil
 }
+
+func (r *Results) StringifyResults() (string, error) {
+	b, err := json.MarshalIndent(r, "", "  ")
+	if err != nil {
+		return "", err
+	}
+
+	return string(b), nil
+}
