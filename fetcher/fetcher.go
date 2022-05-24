@@ -5,6 +5,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"os"
 )
 
 var client = http.Client{}
@@ -25,6 +26,7 @@ func GetGamesForDate(date string) []byte {
 	res, err := client.Do(req)
 	if err != nil {
 		log.Fatalln("Error while fetching games of", date)
+		os.Exit(1)
 	}
 
 	body, err := io.ReadAll(res.Body)
