@@ -5,8 +5,8 @@ import (
 	"log"
 	"os"
 
-	"github.com/Ryltarrr/go-nba/commands"
-	"github.com/Ryltarrr/go-nba/parser"
+	"github.com/Ryltarrr/nba-cli/commands"
+	"github.com/Ryltarrr/nba-cli/parser"
 	"github.com/charmbracelet/bubbles/spinner"
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"

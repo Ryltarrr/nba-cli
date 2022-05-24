@@ -1,4 +1,4 @@
-module github.com/Ryltarrr/go-nba
+module github.com/Ryltarrr/nba-cli
 
 go 1.18
 

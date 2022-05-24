@@ -4,8 +4,8 @@ import (
 	"log"
 	"time"
 
-	"github.com/Ryltarrr/go-nba/fetcher"
-	"github.com/Ryltarrr/go-nba/parser"
+	"github.com/Ryltarrr/nba-cli/fetcher"
+	"github.com/Ryltarrr/nba-cli/parser"
 	tea "github.com/charmbracelet/bubbletea"
 )
 

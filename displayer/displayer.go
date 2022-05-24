@@ -3,7 +3,7 @@ package displayer
 import (
 	"fmt"
 
-	"github.com/Ryltarrr/go-nba/parser"
+	"github.com/Ryltarrr/nba-cli/parser"
 	"github.com/fatih/color"
 )
 
