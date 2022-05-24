@@ -72,15 +72,11 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, nil
 	}
 
-	var cmdTi, cmdS tea.Cmd
-	if !m.showResults {
-		m.textInput, cmdTi = m.textInput.Update(msg)
-	}
-	if m.loading {
-		m.spinner, cmdS = m.spinner.Update(msg)
-	}
+	var cmdTextInput, cmdSpinner tea.Cmd
+	m.textInput, cmdTextInput = m.textInput.Update(msg)
+	m.spinner, cmdSpinner = m.spinner.Update(msg)
 
-	return m, tea.Batch(cmdTi, cmdS)
+	return m, tea.Batch(cmdTextInput, cmdSpinner)
 }
 
 func (m model) View() string {
@@ -99,7 +95,7 @@ func (m model) View() string {
 		s += fmt.Sprintf("\n%s\n", resultString)
 	}
 
-	if !m.loading {
+	if !m.showResults && !m.loading {
 		s += fmt.Sprintf("%s\n", m.textInput.View())
 	}
 
