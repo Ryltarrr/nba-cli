@@ -1,103 +1,93 @@
 package main
 
 import (
-	"flag"
 	"fmt"
 	"log"
 	"os"
-	"time"
 
-	"github.com/Ryltarrr/go-nba/fetcher"
+	"github.com/Ryltarrr/go-nba/commands"
 	"github.com/Ryltarrr/go-nba/parser"
+	"github.com/charmbracelet/bubbles/spinner"
+	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 )
 
-type choice struct {
-	text  string
-	value string
-}
-
 type model struct {
-	choices  []choice
-	cursor   int
-	selected int
-	result   parser.Results
+	result      parser.Results
+	textInput   textinput.Model
+	spinner     spinner.Model
+	loading     bool
+	showResults bool
 }
 
 func initialModel() model {
+	ti := textinput.New()
+	ti.Focus()
+	ti.CharLimit = 10
+	ti.Width = 20
+	ti.Placeholder = "2022-03-27"
+
+	s := spinner.New()
+	s.Spinner = spinner.Dot
+	s.Style = lipgloss.NewStyle().Foreground(lipgloss.Color("205"))
+
 	return model{
-		choices: []choice{
-			{text: "Games for date", value: "gamesForDate"},
-			{text: "Games for date", value: "gamesForDate"},
-			{text: "Games for date", value: "gamesForDate"},
-			{text: "Games for date", value: "gamesForDate"},
-			{text: "Games for date", value: "gamesForDate"},
-		},
-		result: parser.Results{},
+		result:      parser.Results{},
+		textInput:   ti,
+		spinner:     s,
+		loading:     false,
+		showResults: false,
 	}
 }
 
 func (m model) Init() tea.Cmd {
-	// Just return `nil`, which means "no I/O right now, please."
-	return nil
+	return tea.Batch(textinput.Blink, m.spinner.Tick)
 }
 
+// TODO: toggle input on command selection
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 
-	// Is it a key press?
 	case tea.KeyMsg:
 
-		// Cool, what was the actual key pressed?
-		switch msg.String() {
+		switch msg.Type {
 
-		// These keys should exit the program.
-		case "ctrl+c", "q":
+		case tea.KeyCtrlC:
 			return m, tea.Quit
 
-		// The "up" and "k" keys move the cursor up
-		case "up", "k":
-			if m.cursor > 0 {
-				m.cursor--
-			}
+		case tea.KeyEsc:
+			m.showResults = false
+			return m, nil
 
-		// The "down" and "j" keys move the cursor down
-		case "down", "j":
-			if m.cursor < len(m.choices)-1 {
-				m.cursor++
-			}
-
-		// The "enter" key and the spacebar (a literal space) toggle
-		// the selected state for the item that the cursor is pointing at.
-		case "enter", " ":
-			m.selected = m.cursor
-			return m, getGameForDate("")
+		case tea.KeyEnter:
+			m.loading = true
+			return m, commands.GetGamesForDateCommand(m.textInput.Value())
 		}
 
 	case parser.Results:
 		m.result = msg
+		m.loading = false
+		m.showResults = true
+		return m, nil
 	}
 
-	// Return the updated model to the Bubble Tea runtime for processing.
-	// Note that we're not returning a command.
-	return m, nil
+	var cmdTi, cmdS tea.Cmd
+	if !m.showResults {
+		m.textInput, cmdTi = m.textInput.Update(msg)
+	}
+	if m.loading {
+		m.spinner, cmdS = m.spinner.Update(msg)
+	}
+
+	return m, tea.Batch(cmdTi, cmdS)
 }
 
 func (m model) View() string {
-	// The header
-	s := "What to fetch\n\n"
+	s := "Date of the game:\n"
 
-	// Iterate over our choices
-	for i, choice := range m.choices {
-
-		// Is the cursor pointing at this choice?
-		cursor := " " // no cursor
-		if m.cursor == i {
-			cursor = ">" // cursor!
-		}
-
-		// Render the row
-		s += fmt.Sprintf("%s %s\n", cursor, choice.text)
+	if m.loading {
+		s += fmt.Sprintf("%s\n", m.spinner.View())
 	}
 
 	resultString, err := m.result.StringifyResults()
@@ -105,36 +95,17 @@ func (m model) View() string {
 		log.Fatal("error", err)
 	}
 
-	// the results
-	s += fmt.Sprintf("\n%s\n", resultString)
-
-	// The footer
-	s += "\nPress q to quit.\n"
-
-	// Send the UI for rendering
-	return s
-}
-
-type errMsg struct{ err error }
-
-// For messages that contain errors it's often handy to also implement the
-// error interface on the message.
-func (e errMsg) Error() string { return e.err.Error() }
-
-func getGameForDate(url string) tea.Cmd {
-	return func() tea.Msg {
-		dt := time.Now()
-		date := flag.String("date", dt.Format("2006-01-02"), "the date")
-		flag.Parse()
-		var fetcher fetcher.Fetcher
-		body := fetcher.GetGamesForDate(*date)
-		var parser parser.Parser
-		results, err := parser.ParseResults(body)
-		if err != nil {
-			log.Fatalln("Error while parsing results", err)
-		}
-		return results
+	if m.showResults {
+		s += fmt.Sprintf("\n%s\n", resultString)
 	}
+
+	if !m.loading {
+		s += fmt.Sprintf("%s\n", m.textInput.View())
+	}
+
+	s += "\nPress ctrl+c to quit.\n"
+
+	return s
 }
 
 func main() {
