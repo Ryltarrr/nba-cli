@@ -5,10 +5,8 @@ import (
 
 	"github.com/Ryltarrr/nba-cli/parser"
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/fatih/color"
+	"github.com/charmbracelet/lipgloss"
 )
-
-const DRAW string = "DRAW"
 
 type Model struct {
 	Data parser.Results
@@ -23,46 +21,33 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 }
 
 func (m Model) View() string {
-	s := ""
+	s := "Results:\n"
 	for _, game := range m.Data.Scoreboard.Games {
 		awayTeam := game.AwayTeam
 		homeTeam := game.HomeTeam
-		awayColor := teamColors[awayTeam.TeamTricode].SprintFunc()
-		homeColor := teamColors[homeTeam.TeamTricode].SprintFunc()
+		awayColor := teamColors[awayTeam.TeamTricode]
+		homeColor := teamColors[homeTeam.TeamTricode]
 
-		// prints teams with their colors
-		s += fmt.Sprintf("%s @ %s\n",
-			awayColor(leftRightPad(awayTeam.TeamTricode)),
-			homeColor(leftRightPad(homeTeam.TeamTricode)),
-		)
+		s += awayColor.Render(awayTeam.TeamTricode)
+		s += " @ "
+		s += homeColor.Render(homeTeam.TeamTricode)
 
-		// prints scores, the winner is bold
-		winnerTricode := getWinnerTricode(awayTeam, homeTeam)
-		winnerScoreColor := color.New(color.Bold)
-		if winnerTricode == DRAW {
-			s += fmt.Sprintf("%4d  -  %d \n", awayTeam.Score, homeTeam.Score)
-		} else if winnerTricode == awayTeam.TeamTricode {
-			s += winnerScoreColor.Sprintf("%4d", awayTeam.Score)
-			s += fmt.Sprintf("  -  %d \n", homeTeam.Score)
-		} else {
-			s += fmt.Sprintf("%4d  -  ", awayTeam.Score)
-			s += winnerScoreColor.Sprintf("%d\n", homeTeam.Score)
-		}
-		s += "\n"
+		awayBlock, homeBlock := getScoreBlocks(fmt.Sprint(awayTeam.Score), fmt.Sprint(homeTeam.Score))
+		s += fmt.Sprintf("\n%s - %s\n\n", awayBlock, homeBlock)
 	}
 	return s
 }
 
-func getWinnerTricode(awayTeam parser.Team, homeTeam parser.Team) string {
-	if awayTeam.Score == homeTeam.Score {
-		return DRAW
-	} else if awayTeam.Score > homeTeam.Score {
-		return awayTeam.TeamTricode
-	} else {
-		return homeTeam.TeamTricode
-	}
-}
+func getScoreBlocks(awayScore string, homeScore string) (string, string) {
+	scoreBlock := lipgloss.NewStyle().
+		Width(5).
+		Align(0.5)
 
-func leftRightPad(tricode string) string {
-	return " " + tricode + " "
+	if awayScore == homeScore {
+		return scoreBlock.Bold(false).Render(awayScore), scoreBlock.Bold(false).Render(homeScore)
+	} else if awayScore > homeScore {
+		return scoreBlock.Bold(true).Render(awayScore), scoreBlock.Bold(false).Render(homeScore)
+	} else {
+		return scoreBlock.Bold(false).Render(awayScore), scoreBlock.Bold(true).Render(homeScore)
+	}
 }

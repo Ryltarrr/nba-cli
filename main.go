@@ -69,6 +69,7 @@ func initialModel() model {
 	ti.CharLimit = 10
 	ti.Width = 20
 	ti.Placeholder = "2022-03-27"
+	ti.SetValue("2022-01-17")
 
 	s := spinner.New()
 	s.Spinner = spinner.Dot
@@ -136,7 +137,10 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m model) View() string {
-	s := "Date of the game:\n"
+	s := ""
+	if !m.showResults {
+		s += "Date of the game:\n"
+	}
 	padding := lipgloss.NewStyle().Padding(1)
 
 	if m.loading {
