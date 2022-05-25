@@ -7,11 +7,50 @@ import (
 
 	"github.com/Ryltarrr/nba-cli/commands"
 	"github.com/Ryltarrr/nba-cli/parser"
+	"github.com/charmbracelet/bubbles/help"
+	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/spinner"
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 )
+
+type keyMap struct {
+	Enter  key.Binding
+	Escape key.Binding
+	Help   key.Binding
+	Quit   key.Binding
+}
+
+func (k keyMap) ShortHelp() []key.Binding {
+	return []key.Binding{k.Help, k.Quit}
+}
+
+func (k keyMap) FullHelp() [][]key.Binding {
+	return [][]key.Binding{
+		{k.Enter, k.Escape},
+		{k.Help, k.Quit},
+	}
+}
+
+var keys = keyMap{
+	Enter: key.NewBinding(
+		key.WithKeys("enter"),
+		key.WithHelp("↵", "enter"),
+	),
+	Escape: key.NewBinding(
+		key.WithKeys("esc"),
+		key.WithHelp("esc", "hide results"),
+	),
+	Help: key.NewBinding(
+		key.WithKeys("?"),
+		key.WithHelp("?", "toggle help"),
+	),
+	Quit: key.NewBinding(
+		key.WithKeys("ctrl+c"),
+		key.WithHelp("ctrl+c", "quit"),
+	),
+}
 
 type model struct {
 	result      parser.Results
@@ -19,6 +58,9 @@ type model struct {
 	spinner     spinner.Model
 	loading     bool
 	showResults bool
+	keys        keyMap
+	help        help.Model
+	lastKey     string
 }
 
 func initialModel() model {
@@ -38,6 +80,8 @@ func initialModel() model {
 		spinner:     s,
 		loading:     false,
 		showResults: false,
+		keys:        keys,
+		help:        help.New(),
 	}
 }
 
@@ -49,20 +93,28 @@ func (m model) Init() tea.Cmd {
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 
+	case tea.WindowSizeMsg:
+		m.help.Width = msg.Width
+
 	case tea.KeyMsg:
 
-		switch msg.Type {
+		switch {
 
-		case tea.KeyCtrlC:
+		case key.Matches(msg, m.keys.Quit):
 			return m, tea.Quit
 
-		case tea.KeyEsc:
+		case key.Matches(msg, m.keys.Escape):
 			m.showResults = false
 			return m, nil
 
-		case tea.KeyEnter:
+		case key.Matches(msg, m.keys.Enter):
 			m.loading = true
 			return m, commands.GetGamesForDateCommand(m.textInput.Value())
+
+		case key.Matches(msg, m.keys.Help):
+			m.help.ShowAll = !m.help.ShowAll
+			return m, nil
+
 		}
 
 	case parser.Results:
@@ -99,7 +151,11 @@ func (m model) View() string {
 		s += fmt.Sprintf("%s\n", m.textInput.View())
 	}
 
-	s += "\nPress ctrl+c to quit.\n"
+	style := lipgloss.NewStyle().
+		MarginTop(3)
+
+	helpView := m.help.View(m.keys)
+	s += fmt.Sprintf("%s\n", style.Render(helpView))
 
 	return s
 }
