@@ -105,7 +105,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		case key.Matches(msg, m.keys.Escape):
 			m.showResults = false
-			return m, nil
+			m.textInput.Focus()
+			return m, textinput.Blink
 
 		case key.Matches(msg, m.keys.Enter):
 			m.loading = true
@@ -121,6 +122,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.result = msg
 		m.loading = false
 		m.showResults = true
+		m.textInput.Blur()
 		return m, nil
 	}
 
@@ -133,9 +135,10 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 func (m model) View() string {
 	s := "Date of the game:\n"
+	padding := lipgloss.NewStyle().Padding(1)
 
 	if m.loading {
-		s += fmt.Sprintf("%s\n", m.spinner.View())
+		s += fmt.Sprintf("%s\n", padding.Render(m.spinner.View()))
 	}
 
 	resultString, err := m.result.StringifyResults()
@@ -148,14 +151,13 @@ func (m model) View() string {
 	}
 
 	if !m.showResults && !m.loading {
-		s += fmt.Sprintf("%s\n", m.textInput.View())
+		s += fmt.Sprintf("%s\n", padding.Render(m.textInput.View()))
 	}
 
-	style := lipgloss.NewStyle().
+	helpMargin := lipgloss.NewStyle().
 		MarginTop(3)
-
 	helpView := m.help.View(m.keys)
-	s += fmt.Sprintf("%s\n", style.Render(helpView))
+	s += fmt.Sprintf("%s\n", helpMargin.Render(helpView))
 
 	return s
 }
