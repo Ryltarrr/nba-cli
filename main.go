@@ -2,10 +2,10 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"os"
 
 	"github.com/Ryltarrr/nba-cli/commands"
+	"github.com/Ryltarrr/nba-cli/displayer"
 	"github.com/Ryltarrr/nba-cli/parser"
 	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
@@ -53,7 +53,7 @@ var keys = keyMap{
 }
 
 type model struct {
-	result      parser.Results
+	displayer   displayer.Model
 	textInput   textinput.Model
 	spinner     spinner.Model
 	loading     bool
@@ -74,9 +74,11 @@ func initialModel() model {
 	s.Spinner = spinner.Dot
 	s.Style = lipgloss.NewStyle().Foreground(lipgloss.Color("205"))
 
+	d := displayer.New()
+
 	return model{
-		result:      parser.Results{},
 		textInput:   ti,
+		displayer:   d,
 		spinner:     s,
 		loading:     false,
 		showResults: false,
@@ -119,7 +121,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 	case parser.Results:
-		m.result = msg
+		m.displayer.Data = msg
 		m.loading = false
 		m.showResults = true
 		m.textInput.Blur()
@@ -141,13 +143,8 @@ func (m model) View() string {
 		s += fmt.Sprintf("%s\n", padding.Render(m.spinner.View()))
 	}
 
-	resultString, err := m.result.StringifyResults()
-	if err != nil {
-		log.Fatal("error", err)
-	}
-
 	if m.showResults {
-		s += fmt.Sprintf("\n%s\n", resultString)
+		s += m.displayer.View()
 	}
 
 	if !m.showResults && !m.loading {
