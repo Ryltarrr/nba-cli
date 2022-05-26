@@ -69,7 +69,6 @@ type model struct {
 	showResults bool
 	keys        keyMap
 	help        help.Model
-	lastKey     string
 }
 
 func initialModel() model {
