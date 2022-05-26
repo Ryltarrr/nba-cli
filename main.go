@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/Ryltarrr/nba-cli/commands"
 	"github.com/Ryltarrr/nba-cli/displayer"
@@ -76,7 +77,7 @@ func initialModel() model {
 	ti.Focus()
 	ti.CharLimit = 10
 	ti.Width = 20
-	ti.Placeholder = "2022-03-27"
+	ti.Placeholder = time.Now().Format(commands.DATE_FORMAT)
 	ti.SetValue("2022-01-17")
 
 	s := spinner.New()
@@ -110,7 +111,6 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.help.Width = msg.Width
 
 	case tea.KeyMsg:
-		tiValue := m.textInput.Value()
 		switch {
 
 		case key.Matches(msg, m.keys.Quit):
@@ -133,12 +133,11 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.textInput, cmdTextInput = m.textInput.Update(msg)
 			return m, cmdTextInput
 
-		default:
-			if !key.Matches(msg, m.keys.Dash) && (len(tiValue) == 4 || len(tiValue) == 7) {
-				m.textInput.SetValue(tiValue + "-")
-				m.textInput.SetCursor(len(tiValue) + 1)
-			}
+		case !key.Matches(msg, m.keys.Dash):
 			m.textInput, cmdTextInput = m.textInput.Update(msg)
+			newVal, newPos := autoComplete(m.textInput.Value())
+			m.textInput.SetValue(newVal)
+			m.textInput.SetCursor(newPos)
 			return m, cmdTextInput
 
 		}
@@ -153,6 +152,14 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	m.spinner, cmdSpinner = m.spinner.Update(msg)
 	return m, cmdSpinner
+}
+
+func autoComplete(s string) (string, int) {
+	count := len(s)
+	if count == 4 || count == 7 {
+		return s + "-", count + 2
+	}
+	return s, count
 }
 
 func (m model) View() string {
