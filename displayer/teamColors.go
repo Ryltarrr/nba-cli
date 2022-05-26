@@ -31,7 +31,7 @@ var teamColors = map[string]lipgloss.Style{
 	"OKC": lipgloss.NewStyle().Foreground(lipgloss.Color(white)).Background(lipgloss.Color("#007ac1")).Bold(true).Padding(0, 1),
 	"ORL": lipgloss.NewStyle().Foreground(lipgloss.Color("#C4ced4")).Background(lipgloss.Color("#0077c0")).Bold(true).Padding(0, 1),
 	"PHI": lipgloss.NewStyle().Foreground(lipgloss.Color(white)).Background(lipgloss.Color("#006bb6")).Bold(true).Padding(0, 1),
-	"PHX": lipgloss.NewStyle().Foreground(lipgloss.Color(white)).Background(lipgloss.Color("#1d1160")).Bold(true).Padding(0, 1),
+	"PHX": lipgloss.NewStyle().Foreground(lipgloss.Color("#e56020")).Background(lipgloss.Color("#1d1160")).Bold(true).Padding(0, 1),
 	"POR": lipgloss.NewStyle().Foreground(lipgloss.Color(white)).Background(lipgloss.Color("#E03A3E")).Bold(true).Padding(0, 1),
 	"SAC": lipgloss.NewStyle().Foreground(lipgloss.Color("#63727A")).Background(lipgloss.Color("#5a2d81")).Bold(true).Padding(0, 1),
 	"SAS": lipgloss.NewStyle().Foreground(lipgloss.Color("#c4ced4")).Background(lipgloss.Color(black)).Bold(true).Padding(0, 1),
