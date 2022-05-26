@@ -16,10 +16,12 @@ import (
 )
 
 type keyMap struct {
-	Enter  key.Binding
-	Escape key.Binding
-	Help   key.Binding
-	Quit   key.Binding
+	Enter     key.Binding
+	Escape    key.Binding
+	Help      key.Binding
+	Quit      key.Binding
+	Backspace key.Binding
+	Dash      key.Binding
 }
 
 func (k keyMap) ShortHelp() []key.Binding {
@@ -49,6 +51,12 @@ var keys = keyMap{
 	Quit: key.NewBinding(
 		key.WithKeys("ctrl+c"),
 		key.WithHelp("ctrl+c", "quit"),
+	),
+	Backspace: key.NewBinding(
+		key.WithKeys(tea.KeyBackspace.String()),
+	),
+	Dash: key.NewBinding(
+		key.WithKeys("-"),
 	),
 }
 
@@ -94,13 +102,15 @@ func (m model) Init() tea.Cmd {
 
 // TODO: toggle input on command selection
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	var cmdTextInput, cmdSpinner tea.Cmd
+
 	switch msg := msg.(type) {
 
 	case tea.WindowSizeMsg:
 		m.help.Width = msg.Width
 
 	case tea.KeyMsg:
-
+		tiValue := m.textInput.Value()
 		switch {
 
 		case key.Matches(msg, m.keys.Quit):
@@ -119,6 +129,18 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.help.ShowAll = !m.help.ShowAll
 			return m, nil
 
+		case key.Matches(msg, m.keys.Backspace):
+			m.textInput, cmdTextInput = m.textInput.Update(msg)
+			return m, cmdTextInput
+
+		default:
+			if !key.Matches(msg, m.keys.Dash) && (len(tiValue) == 4 || len(tiValue) == 7) {
+				m.textInput.SetValue(tiValue + "-")
+				m.textInput.SetCursor(len(tiValue) + 1)
+			}
+			m.textInput, cmdTextInput = m.textInput.Update(msg)
+			return m, cmdTextInput
+
 		}
 
 	case parser.Results:
@@ -129,11 +151,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, nil
 	}
 
-	var cmdTextInput, cmdSpinner tea.Cmd
-	m.textInput, cmdTextInput = m.textInput.Update(msg)
 	m.spinner, cmdSpinner = m.spinner.Update(msg)
-
-	return m, tea.Batch(cmdTextInput, cmdSpinner)
+	return m, cmdSpinner
 }
 
 func (m model) View() string {
