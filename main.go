@@ -102,7 +102,7 @@ func (m model) Init() tea.Cmd {
 
 // TODO: toggle input on command selection
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	var cmdTextInput, cmdSpinner tea.Cmd
+	var cmdTextInput, cmdSpinner, cmdDisplayer tea.Cmd
 
 	switch msg := msg.(type) {
 
@@ -120,7 +120,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.textInput.Focus()
 			return m, textinput.Blink
 
-		case key.Matches(msg, m.keys.Enter):
+		case !m.showResults && key.Matches(msg, m.keys.Enter):
 			m.loading = true
 			return m, commands.GetGamesForDateCommand(m.textInput.Value())
 
@@ -132,7 +132,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.textInput, cmdTextInput = m.textInput.Update(msg)
 			return m, cmdTextInput
 
-		case !key.Matches(msg, m.keys.Dash):
+		case !m.showResults && !key.Matches(msg, m.keys.Dash):
 			m.textInput, cmdTextInput = m.textInput.Update(msg)
 			newVal, newPos := autoComplete(m.textInput.Value())
 			m.textInput.SetValue(newVal)
@@ -150,7 +150,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	}
 
 	m.spinner, cmdSpinner = m.spinner.Update(msg)
-	return m, cmdSpinner
+	m.displayer, cmdDisplayer = m.displayer.Update(msg)
+	return m, tea.Batch(cmdSpinner, cmdDisplayer)
 }
 
 func autoComplete(s string) (string, int) {
@@ -181,7 +182,7 @@ func (m model) View() string {
 	}
 
 	helpMargin := lipgloss.NewStyle().
-		MarginTop(3)
+		MarginTop(1)
 	helpView := m.help.View(m.keys)
 	s += fmt.Sprintf("%s\n", helpMargin.Render(helpView))
 
