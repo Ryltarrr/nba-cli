@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/Ryltarrr/nba-cli/commands"
-	"github.com/Ryltarrr/nba-cli/displayer"
+	"github.com/Ryltarrr/nba-cli/components"
 	"github.com/Ryltarrr/nba-cli/parser"
 	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
@@ -62,7 +62,7 @@ var keys = keyMap{
 }
 
 type model struct {
-	displayer   displayer.Model
+	gameList    gameList.Model
 	textInput   textinput.Model
 	spinner     spinner.Model
 	loading     bool
@@ -77,17 +77,18 @@ func initialModel() model {
 	ti.CharLimit = 10
 	ti.Width = 20
 	ti.Placeholder = time.Now().Format(commands.DATE_FORMAT)
+	// TODO: Use "2022-01-19" to handle long list
 	ti.SetValue("2022-01-17")
 
 	s := spinner.New()
 	s.Spinner = spinner.Dot
 	s.Style = lipgloss.NewStyle().Foreground(lipgloss.Color("205"))
 
-	d := displayer.New()
+	gl := gameList.New()
 
 	return model{
 		textInput:   ti,
-		displayer:   d,
+		gameList:    gl,
 		spinner:     s,
 		loading:     false,
 		showResults: false,
@@ -102,7 +103,7 @@ func (m model) Init() tea.Cmd {
 
 // TODO: toggle input on command selection
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	var cmdTextInput, cmdSpinner, cmdDisplayer tea.Cmd
+	var cmdTextInput, cmdSpinner, cmdGameList tea.Cmd
 
 	switch msg := msg.(type) {
 
@@ -142,7 +143,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 	case parser.Results:
-		m.displayer.Data = msg
+		m.gameList.Data = msg
 		m.loading = false
 		m.showResults = true
 		m.textInput.Blur()
@@ -150,8 +151,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	}
 
 	m.spinner, cmdSpinner = m.spinner.Update(msg)
-	m.displayer, cmdDisplayer = m.displayer.Update(msg)
-	return m, tea.Batch(cmdSpinner, cmdDisplayer)
+	m.gameList, cmdGameList = m.gameList.Update(msg)
+	return m, tea.Batch(cmdSpinner, cmdGameList)
 }
 
 func autoComplete(s string) (string, int) {
@@ -163,30 +164,38 @@ func autoComplete(s string) (string, int) {
 }
 
 func (m model) View() string {
-	s := ""
-	if !m.showResults {
-		s += "Date of the game:\n"
-	}
-	padding := lipgloss.NewStyle().Padding(1)
+	resultsStr := ""
+	// TODO: Put menu in separate component
+	menu := "Date of the game:\n"
 
+	padding := lipgloss.NewStyle().Padding(1)
 	if m.loading {
-		s += fmt.Sprintf("%s\n", padding.Render(m.spinner.View()))
+		resultsStr += padding.Render(m.spinner.View()) + "\n"
 	}
 
 	if m.showResults {
-		s += m.displayer.View()
+		resultsStr += m.gameList.View()
 	}
 
-	if !m.showResults && !m.loading {
-		s += fmt.Sprintf("%s\n", padding.Render(m.textInput.View()))
-	}
+	menu += padding.Render(m.textInput.View())
 
 	helpMargin := lipgloss.NewStyle().
 		MarginTop(1)
 	helpView := m.help.View(m.keys)
-	s += fmt.Sprintf("%s\n", helpMargin.Render(helpView))
+	resultsStr += fmt.Sprintf("%s\n", helpMargin.Render(helpView))
 
-	return s
+	menuBorderColor := lipgloss.Color("#eee")
+	if !m.showResults {
+		menuBorderColor = lipgloss.Color("205")
+	}
+	menuStyle := lipgloss.NewStyle().
+		MarginRight(2).
+		Padding(0, 1).
+		Border(lipgloss.RoundedBorder()).
+		BorderForeground(menuBorderColor).
+		Render(menu)
+
+	return lipgloss.JoinHorizontal(lipgloss.Top, menuStyle, resultsStr)
 }
 
 func main() {

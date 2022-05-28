@@ -1,9 +1,10 @@
-package displayer
+package gameList
 
 import (
 	"fmt"
 
 	"github.com/Ryltarrr/nba-cli/parser"
+	"github.com/Ryltarrr/nba-cli/utils"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 )
@@ -54,8 +55,8 @@ func (m Model) View() string {
 	for idx, game := range m.Data.Scoreboard.Games {
 		awayTeam := game.AwayTeam
 		homeTeam := game.HomeTeam
-		awayColor := teamColors[awayTeam.TeamTricode]
-		homeColor := teamColors[homeTeam.TeamTricode]
+		awayColor := utils.TeamColors[awayTeam.TeamTricode]
+		homeColor := utils.TeamColors[homeTeam.TeamTricode]
 
 		selected := false
 		if idx == m.cursor {

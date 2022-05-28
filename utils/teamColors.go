@@ -1,4 +1,4 @@
-package displayer
+package utils
 
 import (
 	"github.com/charmbracelet/lipgloss"
@@ -7,7 +7,7 @@ import (
 var white = "#fff"
 var black = "#000"
 
-var teamColors = map[string]lipgloss.Style{
+var TeamColors = map[string]lipgloss.Style{
 	"ATL": lipgloss.NewStyle().Foreground(lipgloss.Color(white)).Background(lipgloss.Color("#e03a3e")).Bold(true).Padding(0, 1),
 	"BOS": lipgloss.NewStyle().Foreground(lipgloss.Color(white)).Background(lipgloss.Color("#007A33")).Bold(true).Padding(0, 1),
 	"BKN": lipgloss.NewStyle().Foreground(lipgloss.Color(white)).Background(lipgloss.Color(black)).Bold(true).Padding(0, 1),
