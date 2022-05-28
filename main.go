@@ -2,107 +2,92 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"os"
-	"time"
 
 	"github.com/Ryltarrr/nba-cli/commands"
-	"github.com/Ryltarrr/nba-cli/components"
+	"github.com/Ryltarrr/nba-cli/components/gameList"
+	"github.com/Ryltarrr/nba-cli/components/menu"
 	"github.com/Ryltarrr/nba-cli/parser"
 	"github.com/charmbracelet/bubbles/help"
-	"github.com/charmbracelet/bubbles/key"
-	"github.com/charmbracelet/bubbles/spinner"
+	Key "github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 )
 
 type keyMap struct {
-	Enter     key.Binding
-	Escape    key.Binding
-	Help      key.Binding
-	Quit      key.Binding
-	Backspace key.Binding
-	Dash      key.Binding
+	Enter     Key.Binding
+	Escape    Key.Binding
+	Help      Key.Binding
+	Quit      Key.Binding
+	Backspace Key.Binding
+	Dash      Key.Binding
 }
 
-func (k keyMap) ShortHelp() []key.Binding {
-	return []key.Binding{k.Help, k.Quit}
+func (k keyMap) ShortHelp() []Key.Binding {
+	return []Key.Binding{k.Help, k.Quit}
 }
 
-func (k keyMap) FullHelp() [][]key.Binding {
-	return [][]key.Binding{
+func (k keyMap) FullHelp() [][]Key.Binding {
+	return [][]Key.Binding{
 		{k.Enter, k.Escape},
 		{k.Help, k.Quit},
 	}
 }
 
 var keys = keyMap{
-	Enter: key.NewBinding(
-		key.WithKeys("enter"),
-		key.WithHelp("↵", "enter"),
+	Enter: Key.NewBinding(
+		Key.WithKeys("enter"),
+		Key.WithHelp("↵", "enter"),
 	),
-	Escape: key.NewBinding(
-		key.WithKeys("esc"),
-		key.WithHelp("esc", "hide results"),
+	Escape: Key.NewBinding(
+		Key.WithKeys("esc"),
+		Key.WithHelp("esc", "hide results"),
 	),
-	Help: key.NewBinding(
-		key.WithKeys("?"),
-		key.WithHelp("?", "toggle help"),
+	Help: Key.NewBinding(
+		Key.WithKeys("?"),
+		Key.WithHelp("?", "toggle help"),
 	),
-	Quit: key.NewBinding(
-		key.WithKeys("ctrl+c"),
-		key.WithHelp("ctrl+c", "quit"),
+	Quit: Key.NewBinding(
+		Key.WithKeys("ctrl+c"),
+		Key.WithHelp("ctrl+c", "quit"),
 	),
-	Backspace: key.NewBinding(
-		key.WithKeys(tea.KeyBackspace.String()),
+	Backspace: Key.NewBinding(
+		Key.WithKeys(tea.KeyBackspace.String()),
 	),
-	Dash: key.NewBinding(
-		key.WithKeys("-"),
+	Dash: Key.NewBinding(
+		Key.WithKeys("-"),
 	),
 }
 
 type model struct {
-	gameList    gameList.Model
-	textInput   textinput.Model
-	spinner     spinner.Model
-	loading     bool
-	showResults bool
-	keys        keyMap
-	help        help.Model
+	gameList gameList.Model
+	menu     menu.Model
+	keys     keyMap
+	help     help.Model
 }
 
 func initialModel() model {
-	ti := textinput.New()
-	ti.Focus()
-	ti.CharLimit = 10
-	ti.Placeholder = time.Now().Format(commands.DATE_FORMAT)
-	// TODO: Use "2022-01-19" to handle long list
-	ti.SetValue("2022-01-17")
-
-	s := spinner.New()
-	s.Spinner = spinner.Dot
-	s.Style = lipgloss.NewStyle().Foreground(lipgloss.Color("205"))
-
 	gl := gameList.New()
+	m := menu.New()
 
 	return model{
-		textInput:   ti,
-		gameList:    gl,
-		spinner:     s,
-		loading:     false,
-		showResults: false,
-		keys:        keys,
-		help:        help.New(),
+		menu:     m,
+		gameList: gl,
+		keys:     keys,
+		help:     help.New(),
 	}
 }
 
 func (m model) Init() tea.Cmd {
-	return tea.Batch(textinput.Blink, m.spinner.Tick)
+	log.Printf("start blink")
+	return tea.Batch(textinput.Blink, m.gameList.Spinner.Tick)
 }
 
 // TODO: toggle input on command selection
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	var cmdTextInput, cmdSpinner, cmdGameList tea.Cmd
+	var cmdSpinner, cmdGameList, cmdMenu tea.Cmd
 
 	switch msg := msg.(type) {
 
@@ -112,105 +97,47 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyMsg:
 		switch {
 
-		case key.Matches(msg, m.keys.Quit):
+		case Key.Matches(msg, m.keys.Quit):
 			return m, tea.Quit
 
-		case key.Matches(msg, m.keys.Escape):
-			m.showResults = false
-			m.textInput.Focus()
+		case Key.Matches(msg, m.keys.Escape):
+			m.menu.Focused = true
+			m.menu.TextInput.Focus()
 			return m, textinput.Blink
 
-		case !m.showResults && key.Matches(msg, m.keys.Enter):
-			m.loading = true
-			return m, commands.GetGamesForDateCommand(m.textInput.Value())
+		case m.menu.Focused && Key.Matches(msg, m.keys.Enter):
+			m.gameList.Loading = true
+			return m, commands.GetGamesForDateCommand(m.menu.TextInput.Value())
 
-		case key.Matches(msg, m.keys.Help):
+		case Key.Matches(msg, m.keys.Help):
 			m.help.ShowAll = !m.help.ShowAll
 			return m, nil
-
-		case key.Matches(msg, m.keys.Backspace):
-			m.textInput, cmdTextInput = m.textInput.Update(msg)
-			newVal := autoDelete(m.textInput.Value())
-			m.textInput.SetValue(newVal)
-			return m, cmdTextInput
-
-		case key.Matches(msg, m.keys.Dash):
-			lenTi := len(m.textInput.Value())
-			if lenTi == 4 || lenTi == 7 {
-				m.textInput, cmdTextInput = m.textInput.Update(msg)
-			}
-			return m, cmdTextInput
-
-		case !m.showResults:
-			m.textInput, cmdTextInput = m.textInput.Update(msg)
-			newVal, newPos := autoComplete(m.textInput.Value())
-			m.textInput.SetValue(newVal)
-			m.textInput.SetCursor(newPos)
-			return m, cmdTextInput
-
 		}
 
 	case parser.Results:
 		m.gameList.Data = msg
-		m.loading = false
-		m.showResults = true
-		m.textInput.Blur()
+		m.gameList.Loading = false
+		m.menu.Focused = false
+		m.menu.TextInput.Blur()
 		return m, nil
 	}
 
-	m.spinner, cmdSpinner = m.spinner.Update(msg)
+	m.gameList.Spinner, cmdSpinner = m.gameList.Spinner.Update(msg)
 	m.gameList, cmdGameList = m.gameList.Update(msg)
-	return m, tea.Batch(cmdSpinner, cmdGameList)
-}
-
-func autoComplete(s string) (string, int) {
-	count := len(s)
-	if count == 4 || count == 7 {
-		return s + "-", count + 2
-	}
-	return s, count
-}
-
-func autoDelete(s string) string {
-	if len(s) > 0 && s[len(s)-1] == '-' {
-		return s[:len(s)-2]
-	}
-	return s
+	m.menu, cmdMenu = m.menu.Update(msg)
+	return m, tea.Batch(cmdSpinner, cmdGameList, cmdMenu)
 }
 
 func (m model) View() string {
-	resultsStr := ""
-	// TODO: Put menu in separate component
-	menu := "Date of the game:\n"
+	menuView := m.menu.View()
 
-	padding := lipgloss.NewStyle().Padding(1)
-	if m.loading {
-		resultsStr += padding.Render(m.spinner.View()) + "\n"
-	}
+	gameListView := m.gameList.View()
 
-	if m.showResults {
-		resultsStr += m.gameList.View()
-	}
+	helpStyle := lipgloss.NewStyle().MarginTop(1)
+	helpView := helpStyle.Render(m.help.View(m.keys))
 
-	menu += padding.Render(m.textInput.View())
-
-	helpMargin := lipgloss.NewStyle().
-		MarginTop(1)
-	helpView := m.help.View(m.keys)
-	resultsStr += fmt.Sprintf("%s\n", helpMargin.Render(helpView))
-
-	menuBorderColor := lipgloss.Color("#eee")
-	if !m.showResults {
-		menuBorderColor = lipgloss.Color("205")
-	}
-	menuStyle := lipgloss.NewStyle().
-		MarginRight(2).
-		Padding(0, 1).
-		Border(lipgloss.RoundedBorder()).
-		BorderForeground(menuBorderColor).
-		Render(menu)
-
-	return lipgloss.JoinHorizontal(lipgloss.Top, menuStyle, resultsStr)
+	leftColumn := lipgloss.JoinVertical(lipgloss.Top, menuView, helpView)
+	return lipgloss.JoinHorizontal(lipgloss.Top, leftColumn, gameListView)
 }
 
 func main() {

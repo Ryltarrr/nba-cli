@@ -5,6 +5,7 @@ import (
 
 	"github.com/Ryltarrr/nba-cli/parser"
 	"github.com/Ryltarrr/nba-cli/utils"
+	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 )
@@ -12,12 +13,20 @@ import (
 type Model struct {
 	Data     parser.Results
 	Selected parser.Game
+	Spinner  spinner.Model
+	Loading  bool
 	cursor   int
 }
 
 func New() Model {
+	s := spinner.New()
+	s.Spinner = spinner.Dot
+	s.Style = lipgloss.NewStyle().Foreground(lipgloss.Color("205"))
+
 	return Model{
-		cursor: 0,
+		cursor:  0,
+		Spinner: s,
+		Loading: false,
 	}
 }
 
@@ -52,6 +61,11 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 
 func (m Model) View() string {
 	s := "Results:\n"
+
+	if m.Loading {
+		s += lipgloss.NewStyle().Padding(1).Render(m.Spinner.View()) + "\n"
+	}
+
 	for idx, game := range m.Data.Scoreboard.Games {
 		awayTeam := game.AwayTeam
 		homeTeam := game.HomeTeam
@@ -76,7 +90,9 @@ func (m Model) View() string {
 		gameStr += fmt.Sprintf("\n%s - %s", awayBlock, homeBlock)
 		s += gameStyle.Render(gameStr) + "\n"
 	}
-	return s
+
+	glStyle := lipgloss.NewStyle().MarginLeft(5)
+	return glStyle.Render(s)
 }
 
 func getScoreBlocks(awayScore int, homeScore int) (string, string) {

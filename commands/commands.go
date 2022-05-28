@@ -6,10 +6,9 @@ import (
 
 	"github.com/Ryltarrr/nba-cli/fetcher"
 	"github.com/Ryltarrr/nba-cli/parser"
+	"github.com/Ryltarrr/nba-cli/utils"
 	tea "github.com/charmbracelet/bubbletea"
 )
-
-const DATE_FORMAT = "2006-01-02"
 
 type errMsg struct{ err error }
 
@@ -17,11 +16,11 @@ func (e errMsg) Error() string { return e.err.Error() }
 
 func GetGamesForDateCommand(date string) tea.Cmd {
 	return func() tea.Msg {
-		_, err := time.Parse(DATE_FORMAT, date)
+		_, err := time.Parse(utils.DATE_FORMAT, date)
 
 		if date == "" || err != nil {
 			dt := time.Now()
-			date = dt.Format(DATE_FORMAT)
+			date = dt.Format(utils.DATE_FORMAT)
 		}
 
 		log.Printf("Fetching results for %s", date)
