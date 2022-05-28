@@ -75,7 +75,6 @@ func initialModel() model {
 	ti := textinput.New()
 	ti.Focus()
 	ti.CharLimit = 10
-	ti.Width = 20
 	ti.Placeholder = time.Now().Format(commands.DATE_FORMAT)
 	// TODO: Use "2022-01-19" to handle long list
 	ti.SetValue("2022-01-17")
