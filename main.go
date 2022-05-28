@@ -130,9 +130,18 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		case key.Matches(msg, m.keys.Backspace):
 			m.textInput, cmdTextInput = m.textInput.Update(msg)
+			newVal := autoDelete(m.textInput.Value())
+			m.textInput.SetValue(newVal)
 			return m, cmdTextInput
 
-		case !m.showResults && !key.Matches(msg, m.keys.Dash):
+		case key.Matches(msg, m.keys.Dash):
+			lenTi := len(m.textInput.Value())
+			if lenTi == 4 || lenTi == 7 {
+				m.textInput, cmdTextInput = m.textInput.Update(msg)
+			}
+			return m, cmdTextInput
+
+		case !m.showResults:
 			m.textInput, cmdTextInput = m.textInput.Update(msg)
 			newVal, newPos := autoComplete(m.textInput.Value())
 			m.textInput.SetValue(newVal)
@@ -160,6 +169,13 @@ func autoComplete(s string) (string, int) {
 		return s + "-", count + 2
 	}
 	return s, count
+}
+
+func autoDelete(s string) string {
+	if len(s) > 0 && s[len(s)-1] == '-' {
+		return s[:len(s)-2]
+	}
+	return s
 }
 
 func (m model) View() string {

@@ -22,3 +22,17 @@ func TestShouldNotAutoComplete(t *testing.T) {
 		t.Fatalf("Wrong cursor placement")
 	}
 }
+
+func TestShouldAutoDelete(t *testing.T) {
+	newVal := autoDelete("test-")
+	if newVal != "tes" {
+		t.Fatalf("Should autodelete")
+	}
+}
+
+func TestShouldNotAutoDelete(t *testing.T) {
+	newVal := autoDelete("test")
+	if newVal != "test" {
+		t.Fatalf("Should not autodelete")
+	}
+}
