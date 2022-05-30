@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/Ryltarrr/nba-cli/commands"
 	"github.com/Ryltarrr/nba-cli/components/gameList"
 	"github.com/Ryltarrr/nba-cli/components/help"
 	"github.com/Ryltarrr/nba-cli/components/menu"
@@ -41,6 +42,12 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		switch msg.String() {
 		case "ctrl+c":
 			cmds = append(cmds, tea.Quit)
+		case "enter":
+			if m.menu.Focused {
+				m.gameList.Loading = true
+				return m, commands.GetGamesForDateCommand(m.menu.TextInput.Value())
+			}
+
 		}
 	}
 

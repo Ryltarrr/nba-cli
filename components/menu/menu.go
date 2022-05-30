@@ -3,7 +3,6 @@ package menu
 import (
 	"time"
 
-	"github.com/Ryltarrr/nba-cli/commands"
 	"github.com/Ryltarrr/nba-cli/parser"
 	"github.com/Ryltarrr/nba-cli/utils"
 	"github.com/charmbracelet/bubbles/textinput"
@@ -62,11 +61,6 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 				m.TextInput, cmdTextInput = m.TextInput.Update(msg)
 			}
 			return m, cmdTextInput
-
-		case "enter":
-			if m.Focused {
-				return m, commands.GetGamesForDateCommand(m.TextInput.Value())
-			}
 
 		}
 
