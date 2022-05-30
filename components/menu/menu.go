@@ -3,6 +3,8 @@ package menu
 import (
 	"time"
 
+	"github.com/Ryltarrr/nba-cli/commands"
+	"github.com/Ryltarrr/nba-cli/parser"
 	"github.com/Ryltarrr/nba-cli/utils"
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
@@ -32,12 +34,15 @@ func New() Model {
 	}
 }
 
+func (m Model) Init() tea.Cmd {
+	return textinput.Blink
+}
+
 func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	var cmdTextInput tea.Cmd
 	switch msg := msg.(type) {
 
 	case tea.KeyMsg:
-
 		switch msg.String() {
 
 		case "esc":
@@ -57,6 +62,12 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 				m.TextInput, cmdTextInput = m.TextInput.Update(msg)
 			}
 			return m, cmdTextInput
+
+		case "enter":
+			if m.Focused {
+				return m, commands.GetGamesForDateCommand(m.TextInput.Value())
+			}
+
 		}
 
 		if m.Focused {
@@ -66,6 +77,11 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 			m.TextInput.SetCursor(newPos)
 			return m, cmdTextInput
 		}
+
+	case parser.Results:
+		m.Focused = false
+		m.TextInput.Blur()
+		return m, nil
 	}
 
 	return m, nil
