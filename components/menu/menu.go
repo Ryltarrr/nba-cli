@@ -43,7 +43,7 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 		case "esc":
 			m.Focused = true
 			m.TextInput.Focus()
-			return m, textinput.Blink
+			return m, nil
 
 		case "backspace":
 			m.TextInput, cmdTextInput = m.TextInput.Update(msg)
@@ -68,7 +68,7 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 		}
 	}
 
-	return m, textinput.Blink
+	return m, nil
 }
 
 func autoComplete(s string) (string, int) {

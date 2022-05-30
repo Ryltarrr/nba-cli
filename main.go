@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"os"
 
 	"github.com/Ryltarrr/nba-cli/commands"
@@ -81,7 +80,6 @@ func initialModel() model {
 }
 
 func (m model) Init() tea.Cmd {
-	log.Printf("start blink")
 	return tea.Batch(textinput.Blink, m.gameList.Spinner.Tick)
 }
 
