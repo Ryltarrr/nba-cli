@@ -47,22 +47,23 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	switch msg := msg.(type) {
 
 	case tea.KeyMsg:
-		numGames := len(m.data.Scoreboard.Games)
 		switch msg.String() {
 		case "up", "k":
 			if m.cursor > 0 {
 				m.cursor--
-				if m.viewport.Width < numGames*numLinesPerGameResult {
-					return m, nil
+				if m.shouldScroll(false) {
+					m.viewport.LineUp(numLinesPerGameResult)
 				}
+				return m, nil
 			}
 
 		case "down", "j":
 			if m.cursor < len(m.data.Scoreboard.Games)-1 {
 				m.cursor++
-				if m.viewport.Width < numGames*numLinesPerGameResult {
-					return m, nil
+				if m.shouldScroll(true) {
+					m.viewport.LineDown(numLinesPerGameResult)
 				}
+				return m, nil
 			}
 
 		}
@@ -102,31 +103,43 @@ func (m Model) View() string {
 	}
 }
 
+func (m Model) shouldScroll(increase bool) bool {
+	gameDisplayed := m.viewport.Height / numLinesPerGameResult
+	if increase {
+		return m.cursor > gameDisplayed/2
+	} else {
+		return (m.cursor + 1 - gameDisplayed) < (gameDisplayed / 2)
+	}
+}
+
 func (m Model) getContent() string {
-	s := "Results:\n"
-	for idx, game := range m.data.Scoreboard.Games {
-		awayTeam := game.AwayTeam
-		homeTeam := game.HomeTeam
-		awayColor := utils.TeamColors[awayTeam.TeamTricode]
-		homeColor := utils.TeamColors[homeTeam.TeamTricode]
+	s := ""
+	if len(m.data.Scoreboard.Games) > 0 {
+		s += "Results:\n"
+		for idx, game := range m.data.Scoreboard.Games {
+			awayTeam := game.AwayTeam
+			homeTeam := game.HomeTeam
+			awayColor := utils.TeamColors[awayTeam.TeamTricode]
+			homeColor := utils.TeamColors[homeTeam.TeamTricode]
 
-		selected := false
-		if idx == m.cursor {
-			selected = true
+			selected := false
+			if idx == m.cursor {
+				selected = true
+			}
+			gameStyle := lipgloss.NewStyle().
+				MarginBottom(1).
+				MarginLeft(1).
+				Faint(!selected).
+				Border(lipgloss.NormalBorder(), false, false, false, selected)
+			gameStr := ""
+			gameStr += awayColor.Faint(!selected).Render(awayTeam.TeamTricode)
+			gameStr += " @ "
+			gameStr += homeColor.Faint(!selected).Render(homeTeam.TeamTricode)
+
+			awayBlock, homeBlock := getScoreBlocks(awayTeam.Score, homeTeam.Score)
+			gameStr += fmt.Sprintf("\n%s - %s", awayBlock, homeBlock)
+			s += gameStyle.Render(gameStr) + "\n"
 		}
-		gameStyle := lipgloss.NewStyle().
-			MarginBottom(1).
-			MarginLeft(1).
-			Faint(!selected).
-			Border(lipgloss.NormalBorder(), false, false, false, selected)
-		gameStr := ""
-		gameStr += awayColor.Faint(!selected).Render(awayTeam.TeamTricode)
-		gameStr += " @ "
-		gameStr += homeColor.Faint(!selected).Render(homeTeam.TeamTricode)
-
-		awayBlock, homeBlock := getScoreBlocks(awayTeam.Score, homeTeam.Score)
-		gameStr += fmt.Sprintf("\n%s - %s", awayBlock, homeBlock)
-		s += gameStyle.Render(gameStr) + "\n"
 	}
 	return s
 }
