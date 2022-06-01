@@ -3,6 +3,7 @@ package gameList
 import (
 	"fmt"
 
+	gamedetails "github.com/Ryltarrr/nba-cli/components/gameDetails"
 	"github.com/Ryltarrr/nba-cli/parser"
 	"github.com/Ryltarrr/nba-cli/utils"
 	"github.com/charmbracelet/bubbles/spinner"
@@ -21,6 +22,7 @@ type Model struct {
 	cursor   int
 	ready    bool
 	viewport viewport.Model
+	details  gamedetails.Model
 }
 
 func New() Model {
@@ -32,6 +34,7 @@ func New() Model {
 		cursor:  0,
 		Spinner: s,
 		Loading: false,
+		details: gamedetails.New(),
 	}
 }
 
@@ -66,6 +69,9 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 				return m, nil
 			}
 
+		case "+":
+			m.details.SetGame(m.data.Scoreboard.Games[m.cursor])
+
 		}
 
 	case tea.WindowSizeMsg:
@@ -90,17 +96,25 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	cmds = append(cmds, cmd)
 	m.Spinner, cmd = m.Spinner.Update(msg)
 	cmds = append(cmds, cmd)
+	m.details, cmd = m.details.Update(msg)
+	cmds = append(cmds, cmd)
 	return m, tea.Batch(cmds...)
 }
 
 func (m Model) View() string {
 	if m.Loading {
 		return lipgloss.NewStyle().Padding(1).Render(m.Spinner.View()) + "\n"
-	} else {
+	} else if len(m.data.Scoreboard.Games) > 0 {
 		glStyle := lipgloss.NewStyle().MarginLeft(5)
 		m.viewport.SetContent(m.getContent())
-		return glStyle.Render(m.viewport.View())
+		join := lipgloss.JoinHorizontal(
+			lipgloss.Top,
+			glStyle.Render(m.viewport.View()),
+			glStyle.Render(m.details.View()),
+		)
+		return join
 	}
+	return ""
 }
 
 func (m Model) shouldScroll(increase bool) bool {
