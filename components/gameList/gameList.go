@@ -69,9 +69,6 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 				return m, nil
 			}
 
-		case "+":
-			m.details.SetGame(m.data.Scoreboard.Games[m.cursor])
-
 		}
 
 	case tea.WindowSizeMsg:
@@ -92,6 +89,9 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 		m.viewport.SetContent(m.getContent())
 	}
 
+	if len(m.data.Scoreboard.Games) > m.cursor {
+		m.details.SetGame(m.data.Scoreboard.Games[m.cursor])
+	}
 	m.viewport, cmd = m.viewport.Update(msg)
 	cmds = append(cmds, cmd)
 	m.Spinner, cmd = m.Spinner.Update(msg)
