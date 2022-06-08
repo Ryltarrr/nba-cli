@@ -87,6 +87,7 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 		m.data = msg
 		m.Loading = false
 		m.viewport.SetContent(m.getContent())
+		m.cursor = 0
 	}
 
 	if len(m.data.Scoreboard.Games) > m.cursor {
